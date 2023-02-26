@@ -34,7 +34,7 @@ def upload():
     if request.method == 'POST':
         if form.validate_on_submit():
             # Get file data and save to your uploads folder
-            photo = form.photo.data
+            photo = form.image.data
             filename = secure_filename(photo.filename)
             photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             flash('File Saved Sucessfully', 'success')
@@ -70,6 +70,13 @@ def login():
             flash('Invalid username or password.', 'danger')
 
     return render_template('login.html', form=form)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out.', 'success')
+    return redirect(url_for('home'))
 
 # user_loader callback. This callback is used to reload the user object from
 # the user ID stored in the session
@@ -114,19 +121,19 @@ def page_not_found(error):
     return render_template('404.html'), 404
 
 def get_uploaded_images():
-    rootdir = os.getcwd()
-    filenames = []
-    for subdir, dirs, files in os.walk(rootdir + '/uploads'):
-        for file in files:
-            if file.endswith('.jpg') or file.endswith('.png'):
-                filenames.append(file)
-    return filenames
+    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', './upload')
+    images = []
+    for filename in os.listdir(UPLOAD_FOLDER):
+        if filename.endswith('.jpg') or filename.endswith('.png'):
+            images.append(filename)
 
-print (get_uploaded_images())
+    return images
 
-@app.route('/uploads/<filename>')
+
+
+@app.route('/upload/<filename>')
 def get_image(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    return send_from_directory(os.path.join(os.getcwd(), app.config['UPLOAD_FOLDER']), filename)
 
 @app.route('/files')
 @login_required
